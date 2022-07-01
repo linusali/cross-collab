@@ -1,0 +1,123 @@
+= RHEL for Edge on ARM platforms
+Mohammed Salih <msalih@redhat.com>
+:revnumber: 1
+:revdate: 30-06-2022
+:toc:
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 4
+:icons: font
+:source-highlighter: highlightjs
+:data-uri:
+
+== Introduction
+The target of this use case is to investigate if it is possible to deploy RHEL for Edge image on ARM based far-Edge devices like NVIDIA Jetson Nano/Xavier/TX2 or Raspberry Pi devices. There are aleady certain amount of work gone into this effort by engineering and product management from both Red Hat and NVIDIA. 
+
+But as far as I know, so far the efforts are limited to the higher end Jetsons like TX2 and Xaviers. So here we are attempting to try and run RHEL for Edge on lower end devices. The idea is to document as much as we can. It could be a failure at the end, but would be a good start for the further development of the tools surrounding it. 
+
+== Setup
+
+=== Prepare Build VM
+For this installation we need to first prepare an ARM instance on AWS or similar platform. We chose AWS because of the availability of the free tier and the availability of RHEL for ARM image availability. Following are the steps we have used to spin the VM up.
+
+==== Laptop prep for AWS CLI
+[NOTE]
+====
+You may skip this step
+
+- if you already have AWS cli installed on your laptop/PC 
+- or if you are not using Mac
+- or you prefer using AWS Web Console 
+- or you are using a different platform for your builder VM
+====
+
+===== Assumptions
+- It is assumed that you already have got the AWS Access Key ID and Secret Access Key. In case if you have not, please refer https://docs.aws.amazon.com/cli/latest/userguide/getting-started-prereqs.html for more information.
+- A local SSH key pair is already generated and is available under `~/.ssh/id_rsa.pub`
+
+===== CLI instalation
+[source,bash]
+----
+$ curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+$ sudo installer -pkg AWSCLIV2.pkg -target /
+$ which aws
+$ aws --version
+----
+[TIP]
+Please refer https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-troubleshooting.html for troubleshooting the CLI installation.
+
+===== Configure AWS CLI profile
+[source,bash]
+----
+$ aws configure
+AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name [None]: ap-south-1
+Default output format [None]: yaml
+----
+
+===== Create a SSH key pair
+
+[source,bash]
+----
+aws --region ap-south-1 ec2 \
+import-key-pair \
+--key-name "my-ssh-pub-key" \
+--public-key-material "$(openssl enc -base64 -A -in $HOME/.ssh/id_rsa.pub)"
+----
+
+===== Create a security group
+[source,bash]
+----
+# New Security Group
+aws --region ap-south-1 ec2 create-security-group \
+    --group-name rhel-access \
+    --description "RHEL 4 Edge Access"
+# Allow SSH Access
+aws --region ap-south-1 ec2 authorize-security-group-ingress \
+    --group-name rhel-access \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0
+----
+
+===== Spinning up the VM
+[NOTE]
+====
+`ami-0cbe04a3ce796c98e` is `RHEL-8.4.0_HVM-20210504-arm64-2-Hourly2-GP2` in ap-south-1 with EBS backed disk. It could be different based on the region you chose to deploy the instance. Please search for RHEL arm64 images in your selected region. 
+====
+
+[source,bash]
+----
+aws --region ap-south-1 ec2 run-instances \
+    --image-id ami-0cbe04a3ce796c98e \
+    --instance-type t4g.small \
+    --key-name my-ssh-pub-key \
+    --security-groups rhel-access
+----
+
+=== Build Image 
+
+==== Register host and Install packages
+[source,bash]
+----
+ORGID=[Red Hat Org ID]
+ACT_KEY=[Activation Key]
+cat > /tmp/user-data <<EOF
+subscription-manager register --org $ORGID --activationkey $ACT_KEY
+yum install osbuild-composer composer-cli cockpit-composer bash-completion
+systemctl enable osbuild-composer.socket --now
+systemctl enable cockpit.socket --now
+systemctl restart osbuild-composer
+EOF
+----
+
+=== Prepare Jetson Nano
+In this step we are following the steps from https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/ upto "Getting Fedora running". You can also avoid the section "Jetson TX1 and TX2" in case you are not targetting TX1 or TX2.
+
+
+== Bugs
+
+== References
+- https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/
+- https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/composing_installing_and_managing_rhel_for_edge_images/introducing-rhel-for-edge-images_composing-installing-managing-rhel-for-edge-images
