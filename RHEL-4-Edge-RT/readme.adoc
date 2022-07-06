@@ -19,8 +19,97 @@ This document is an attempt to bring together the steps required to run Real-Tim
 - Cockpit and os-tree builder is running.
 
 == Steps
+=== VM Creation
+[NOTE]
+Here we are using a CDROM image containing user-data to pre-populate the RHEL KVM image with password and SSH keys
+
+[source,bash]
+----
+mkdir /var/lib/libvirt/images/edge && cd $_
+cat > meta-data <<EOF
+instance-id: $(uuidgen)
+EOF
+
+cat > user-data <<EOF
+#cloud-config
+
+runcmd:
+  - setenforce 1
+
+hostname: rhel-edge
+fqdn: rhel-edge.rhdxb.net
+
+chpasswd:
+  list: |
+    root:redhat123
+    cloud-user:redhat123
+  expire: False
+
+disable_root: False
+ssh_pwauth: True
+ssh_svcname: ssh
+ssh_deletekeys: True
+ssh_genkeytypes: ['rsa', 'ecdsa']
+
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJtL2AyFSQH5bEfJfdu6JLfoYuLxGDfcxbKqPj9qOJknmH0P21CcFaZT0xlDZ+W9x5Vo0f708SJDrqBm22sXbC63+lRKdKrJzRD0zJb2Nz+SMsFKTviSzvl6z97y7Qh9qPyxM810KYSGWwGIB6iD5cNDe6p3QgAqshee/K4Ec/kDAuqX3H9dpe1AQqqL5mWE5vg5j3QIwcvF8HZmTorF7JfvfT6ZEllO7HhzqUYmHcAyfRhGBvnUqHE6NLc9mzNl8yyUFYcuBLW62M7JU1hkBorMldKC/f7DYXk3elFMzqvdFHyWsRqC1U7/2zHGuGTBnrNYWVzYaZCDWwDgc+sceR msalih
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8f+SSTVE6bP/+ZAup6Q3weGWx+d3Ocj/vLWZXgcodvel3aEJ3tzU4C5FqutHUAsQduzaijavGG+GyqJK8WUXYcvQo6hqkANbK0QDl0oWRRwUOodHYTuzC4ktwFqUUyNxTQaLb81PjxF9cwImxnz9zQyiLCOm3HAfNB8XsqAn/6R4f7LzMJezEGpY8xOUrURnQiiw1bM0R1DukuhrIBuSHiJcHlOPs14+hnd5trhDhgdVLbMVBk6BVAKDH2jyTnNzmJp2AKwQfV74m3QHVNYV0EVrq5/mKwAkwRCGgDSWPpLc7PCjmtCzI9OCpH0FN7VWOoFDbZxQAkaXECyRB93E9jBQ7oEgF7SmUITYMGrDDstXc+wlEG7T0+GN+ym3g1HinChLglHAVKE6GLEiEq644fdASVF3Kf2ysjuvR98UWWHzVnlaQROUo/JjqHb3QeuUfNOAQjLhrArK+IQHGUz6VOb6JrVpPOufAFAIwNcQOzHwRdJpagH/tb85h49R9TFE= root@lab2
+
+output:
+  all: ">> /var/log/cloud-init.log"
+EOF
+
+cat > network-config <<EOF
+version: 1
+config:
+  - type: physical
+    name: eth0
+    subnets:
+      - type: dhcp
+EOF
+
+genisoimage --output cdrom.iso -input-charset utf-8 -volid cidata -joliet -r user-data meta-data network-config
+----
+
+[source,bash]
+----
+virt-install --name rhel9-build \
+ --memory 4000 --vcpus 4 \
+ --disk /var/lib/libvirt/images/rhel-9-kvm.qcow2 \
+ --cdrom /var/lib/libvirt/images/edge/cdrom.iso  \
+ --cpu host --os-variant rhel9.0 \
+ --network network=default,model=virtio \
+ --noreboot --noautoconsole  --boot menu=on,useserial=on
+----
+
+==== Find IP address of the VM
+[source,bash]
+----
+IP=$(virsh domifaddr rhel9-build | awk '$1 ~ /vnet/ {print $NF}')
+echo $IP
+----
+
+=== Additional Subscription
+[source,bash]
+----
+subscription-manager repos --enable rhel-8-for-x86_64-rt-rpms
+----
 
 === Blueprint Creation
+[source,bash]
+----
+cat > rt-blueprint.toml <<EOF
+name = "rt-blueprint"
+description = "Blueprint for enabling RT kernel"
+version = "0.0.1"
+modules = [ ]
+groups = [ ]
+
+[[packages]]
+name = "package-name"
+version = "package-version"
+EOF
+----
 === Image building 
 === Running a VM with newly build image
 
