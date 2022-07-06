@@ -112,8 +112,22 @@ systemctl restart osbuild-composer
 EOF
 ----
 
-=== Prepare Jetson Nano
+== Prepare Jetson Nano
 In this step we are following the steps from https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/ upto "Getting Fedora running". You can also avoid the section "Jetson TX1 and TX2" in case you are not targetting TX1 or TX2.
+
+== Burn / Flash the image.
+
+Download the image from builder VM to your local PC/laptop where you can burn/flash the image to a SD card. Please follow the command below. 
+
+[source,bash]
+----
+dnf install -y usbutils uboot-images-armv8 arm-image-installer
+arm-image-installer \
+ --media=/dev/sdf \
+ --resizefs \
+ --target=rpi4 \
+ --image=62daf6c7-8d96-4d76-8f24-f6aaa2f79dbe-image.raw.xz
+----
 
 == Observations / Notes
 [cols="1,2"]
