@@ -92,17 +92,18 @@ echo $IP
 === Enable os-tree builder on the VM
 [source,bash]
 ----
-yum install osbuild-composer composer-cli cockpit-composer bash-completion
+subscription-manager register --org $ORGID --activationkey $ACT_KEY
+dnf update -y
+dnf install osbuild-composer composer-cli cockpit-composer bash-completion
 systemctl enable osbuild-composer.socket --now
 systemctl enable cockpit.socket --now
-firewall-cmd --add-service=cockpit && firewall-cmd --add-service=cockpit --permanent
 source  /etc/bash_completion.d/composer-cli
 systemctl restart osbuild-composer
 ----
 === Additional Subscription
 [source,bash]
 ----
-subscription-manager repos --enable rhel-8-for-x86_64-rt-rpms
+subscription-manager repos --enable rhel-9-for-x86_64-rt-rpms
 ----
 
 
