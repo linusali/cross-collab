@@ -114,8 +114,7 @@ EOF
 
 [source,bash]
 ----
-mkdir /root/repo
-cd /root/repo
+mkdir /root/repo && cd $_
 ----
 
 [source,bash]
@@ -131,6 +130,7 @@ EOF
 
 [source,bash]
 ----
+composer-cli blueprints push blueprint.toml
 composer-cli blueprints depsolve arm-image
 build=$(composer-cli compose start arm-image edge-commit | awk '{print $2}')
 status=""
@@ -139,10 +139,13 @@ while [ "x$status" != "xFINISHED" ] ; do
     echo -en "."
     sleep 3
 done
+mkdir images && cd $_
+composer-cli compose image $build
 ----
 
 [source,bash]
 ----
+cd /root/repo
 cat <<EOF > nginx.conf
 events {
 }
@@ -159,6 +162,7 @@ pid /run/nginx.pid;
 daemon off;
 EOF
 ----
+
 [source,bash]
 ----
 cat <<EOF > Dockerfile
