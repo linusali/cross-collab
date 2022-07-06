@@ -103,20 +103,21 @@ aws --region ap-south-1 ec2 run-instances \
 ----
 ORGID=[Red Hat Org ID]
 ACT_KEY=[Activation Key]
-cat > /tmp/user-data <<EOF
 subscription-manager register --org $ORGID --activationkey $ACT_KEY
 yum install osbuild-composer composer-cli cockpit-composer bash-completion
 systemctl enable osbuild-composer.socket --now
 systemctl enable cockpit.socket --now
 systemctl restart osbuild-composer
-EOF
+
 ----
 
+==== Create a directory to hold the build files
 [source,bash]
 ----
 mkdir /root/repo && cd $_
 ----
 
+==== Create Blueprint
 [source,bash]
 ----
 cat > blueprint.toml <<EOF
@@ -128,6 +129,7 @@ groups = [ ]
 EOF
 ----
 
+==== Build an edge-commit image
 [source,bash]
 ----
 composer-cli blueprints push blueprint.toml
@@ -143,6 +145,7 @@ mkdir images && cd $_
 composer-cli compose image $build
 ----
 
+==== Nginx config
 [source,bash]
 ----
 cd /root/repo
@@ -163,6 +166,7 @@ daemon off;
 EOF
 ----
 
+==== Dockerfile to host RHEL repo
 [source,bash]
 ----
 cat <<EOF > Dockerfile
@@ -177,7 +181,11 @@ CMD ["/usr/sbin/nginx", "-c", "/etc/nginx.conf"]
 EOF
 ----
 
-
+==== Build raw.xz image
+[source,bash]
+----
+#WIP
+----
 
 == Prepare Jetson Nano
 In this step we are following the steps from https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/ upto "Getting Fedora running". You can also avoid the section "Jetson TX1 and TX2" in case you are not targetting TX1 or TX2.
