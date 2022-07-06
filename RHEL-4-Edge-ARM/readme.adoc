@@ -112,6 +112,69 @@ systemctl restart osbuild-composer
 EOF
 ----
 
+[source,bash]
+----
+mkdir /root/repo
+cd /root/repo
+----
+
+[source,bash]
+----
+cat > blueprint.toml <<EOF
+name = "arm-image"
+description = "Image for ARM based SoC"
+version = "0.0.1"
+modules = [ ]
+groups = [ ]
+EOF
+----
+
+[source,bash]
+----
+composer-cli blueprints depsolve arm-image
+build=$(composer-cli compose start arm-image edge-commit | awk '{print $2}')
+status=""
+while [ "x$status" != "xFINISHED" ] ; do 
+    status=$(composer-cli compose status |grep $build|awk '{print $2}')
+    echo -en "."
+    sleep 3
+done
+----
+
+[source,bash]
+----
+cat <<EOF > nginx.conf
+events {
+}
+http {
+    server{
+        listen 8080;
+        root /usr/share/nginx/html;
+        location / {
+            autoindex on;
+            }
+        }
+     }
+pid /run/nginx.pid;
+daemon off;
+EOF
+----
+[source,bash]
+----
+cat <<EOF > Dockerfile
+FROM registry.access.redhat.com/ubi8/ubi
+RUN yum -y install nginx && yum clean all
+ARG kickstart
+ARG commit
+ADD \$commit /usr/share/nginx/html/
+ADD nginx.conf /etc/
+EXPOSE 8080
+CMD ["/usr/sbin/nginx", "-c", "/etc/nginx.conf"]
+EOF
+----
+
+
+
 == Prepare Jetson Nano
 In this step we are following the steps from https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/ upto "Getting Fedora running". You can also avoid the section "Jetson TX1 and TX2" in case you are not targetting TX1 or TX2.
 
