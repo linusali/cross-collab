@@ -1,0 +1,37 @@
+= RHEL for Edge Real-Time Kernel
+RHEL for Edge Hackfest Team [Mohammed Salih, Gianni Salinetti, Nicolo Amato]
+:revnumber: 1
+:revdate: 06-07-2022
+:toc:
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 4
+:icons: font
+:source-highlighter: highlightjs
+:data-uri:
+
+== Introduction
+This document is an attempt to bring together the steps required to run Real-Time kernel on top of RHEL for Edge nodes. Currently there is a lack of documentation surrounding this and we hope this could be a step towards the right direction.
+
+== Assumptions
+- RHEL for edge builder VM ready and subscribed to Red Hat Repositories
+- All necessary packages for the builder is installed.
+- Cockpit and os-tree builder is running.
+
+== Steps
+
+=== Blueprint Creation
+=== Image building 
+=== Running a VM with newly build image
+
+== Bugs
+[cols="2,2,2,1,3"]
+|===
+|Reported By |Type (Code/Doc)|BZ Link |New / Existing|Issue Summary
+
+|[Name]|[Code\|Doc]|https://bugzilla.redhat.com/show_bug.cgi?id=bug_id|[New\|Existing]|[A brief summary about the issue]
+
+|===
+
+== References
+- https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/html-single/installing_rhel_8_for_real_time/index
