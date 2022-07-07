@@ -154,6 +154,7 @@ version = "*"
 
 [customizations.kernel]
 name = "kernel-rt"
+append = "hugepages=10"
 EOF
 ----
 
