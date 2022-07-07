@@ -207,6 +207,13 @@ done
 |===
 |Reported By |Type (Code/Doc)|BZ Link |New / Existing|Issue Summary
 
+| Glanni|Code|https://bugzilla.redhat.com/show_bug.cgi?id=2104500|New|During the creation of a RHEL for Edge commit with a custom kernel-rt the build fails with the following errors:
+
+
+error: Finalizing rootfs: During kernel processing: Multiple subdirectories found in: usr/lib/modules: 5.14.0-70.17.1.el9_0.x86_64 5.14.0-70.17.1.rt21.89.el9_0.x86_64 
+
+
+The conflict is found when finalizing the rootfs of ostree since two kernel module trees are found in the filesystem
 |[Name]|[Code\|Doc]|https://bugzilla.redhat.com/show_bug.cgi?id=bug_id|[New\|Existing]|[A brief summary about the issue]
 
 |===
