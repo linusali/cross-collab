@@ -148,6 +148,9 @@ version = "*"
 [[packages]]
 name = "tuned-profiles-realtime"
 version = "*"
+
+[customizations.kernel]
+name = "kernel-rt"
 EOF
 ----
 
