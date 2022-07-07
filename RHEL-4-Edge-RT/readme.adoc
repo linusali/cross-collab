@@ -214,7 +214,7 @@ error: Finalizing rootfs: During kernel processing: Multiple subdirectories foun
 
 
 The conflict is found when finalizing the rootfs of ostree since two kernel module trees are found in the filesystem
-|[Name]|[Code\|Doc]|https://bugzilla.redhat.com/show_bug.cgi?id=bug_id|[New\|Existing]|[A brief summary about the issue]
+
 
 |===
 
