@@ -11,7 +11,9 @@ RHEL for Edge Hackfest Team [Mohammed Salih, Gianni Salinetti, Nicolo Amato]
 :data-uri:
 
 == Introduction
-This document is an attempt to bring together the steps required to run Real-Time kernel on top of RHEL for Edge nodes. Currently there is a lack of documentation surrounding this and we hope this could be a step towards the right direction.
+Some or most industrial systems require computing systems with low latency, consistent response time, and determinism. Red Hat has long been providing Linux kernels specifically for this as part of the repositories available through subscriptions.
+
+This document is an attempt to bring together the steps required to run Real-Time kernel on top of RHEL for Edge nodes. Currently there is a lack of documentation surrounding this and we hope this could be a step towards the right direction. 
 
 == Assumptions
 - RHEL for edge builder VM ready and subscribed to Red Hat Repositories
@@ -288,6 +290,15 @@ echo $IP
 ----
 ssh root@$IP # Since the ssh keys are already injected it should directly log you in.
 uname -a 
+----
+
+=== Further kernel customization of the image.
+For further kernel customization of the image you can use the following option.
+[source,toml]
+----
+[customizations.kernel]
+name = "kernel-rt"
+append = "hugepages=10"
 ----
 
 == Bugs
