@@ -314,8 +314,11 @@ error: Finalizing rootfs: During kernel processing: Multiple subdirectories foun
 
 The conflict is found when finalizing the rootfs of ostree since two kernel module trees are found in the filesystem
 
+| Mohammed Salih|Doc|https://bugzilla.redhat.com/show_bug.cgi?id=2104819|New|Doc bug to add more details to the RHEL for edge documentation
 
 |===
 
 == References
 - https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/html-single/installing_rhel_8_for_real_time/index
+- https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/composing_a_customized_rhel_system_image/creating-system-images-with-composer-command-line-interface_composing-a-customized-rhel-system-image#image-customizations_creating-system-images-with-composer-command-line-interface
+- https://www.redhat.com/sysadmin/real-time-kernel
