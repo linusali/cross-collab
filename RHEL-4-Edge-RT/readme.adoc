@@ -82,11 +82,12 @@ virt-install --name rhel9-build \
  --noreboot --noautoconsole  --boot menu=on,useserial=on
 ----
 
-==== Find IP address of the VM
+==== Find IP address of the VM and SSH to it
 [source,bash]
 ----
 IP=$(virsh domifaddr rhel9-build | awk '$1 ~ /vnet/ {print $NF}')
 echo $IP
+ssh root@$IP
 ----
 
 === Enable os-tree builder on the VM
@@ -192,7 +193,7 @@ systemctl restart osbuild-composer
 ----
 composer-cli blueprints push rt-blueprint.toml
 composer-cli blueprints depsolve r4e-rt
-build=$(composer-cli compose start r4e-rt edge-commit | awk '{print $2}')
+build=$(composer-cli compose start r4e-rt qcow2 | awk '{print $2}')
 status=""
 while [ "x$status" != "xFINISHED" ] ; do 
     status=$(composer-cli compose status |grep $build|awk '{print $2}')
@@ -200,7 +201,94 @@ while [ "x$status" != "xFINISHED" ] ; do
     sleep 3
 done
 ----
+=== Download the image
+[source,bash]
+----
+composer-cli compose image ${build}
+----
+
 === Running a VM with newly build image
+These steps were done on a baremetal server. Note down the location where the `composer-cli` downloaded the image file on the builder VM. In our case it was `/root/${build}-disk.qcow2`
+
+==== Copy the image from the Builder VM
+[source,bash]
+----
+cd /var/lib/libvirt/images
+scp root@192.168.122.36:/root/${build}-disk.qcow2 ./rt-edge.qcow2
+----
+
+==== Create a cloud-init disk
+[source,bash]
+----
+mkdir /var/lib/libvirt/images/rt && cd $_
+cat > meta-data <<EOF
+instance-id: bb5cc7e0-d949-4f6c-804b-9f8da0b1323a
+EOF
+
+cat > network-config <<EOF
+version: 1
+config:
+  - type: physical
+    name: eth0
+    subnets:
+      - type: dhcp
+EOF
+cat > user-data <<EOF
+#cloud-config
+
+runcmd:
+  - setenforce 1
+
+hostname: rhel-edge
+fqdn: rhel9-rt-edge.rhdxb.net
+
+chpasswd:
+  list: |
+    root:redhat123
+    cloud-user:redhat123
+  expire: False
+
+disable_root: False
+ssh_pwauth: True
+ssh_svcname: ssh
+ssh_deletekeys: True
+ssh_genkeytypes: ['rsa', 'ecdsa']
+
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJtL2AyFSQH5bEfJfdu6JLfoYuLxGDfcxbKqPj9qOJknmH0P21CcFaZT0xlDZ+W9x5Vo0f708SJDrqBm22sXbC63+lRKdKrJzRD0zJb2Nz+SMsFKTviSzvl6z97y7Qh9qPyxM810KYSGWwGIB6iD5cNDe6p3QgAqshee/K4Ec/kDAuqX3H9dpe1AQqqL5mWE5vg5j3QIwcvF8HZmTorF7JfvfT6ZEllO7HhzqUYmHcAyfRhGBvnUqHE6NLc9mzNl8yyUFYcuBLW62M7JU1hkBorMldKC/f7DYXk3elFMzqvdFHyWsRqC1U7/2zHGuGTBnrNYWVzYaZCDWwDgc+sceR msalih
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8f+SSTVE6bP/+ZAup6Q3weGWx+d3Ocj/vLWZXgcodvel3aEJ3tzU4C5FqutHUAsQduzaijavGG+GyqJK8WUXYcvQo6hqkANbK0QDl0oWRRwUOodHYTuzC4ktwFqUUyNxTQaLb81PjxF9cwImxnz9zQyiLCOm3HAfNB8XsqAn/6R4f7LzMJezEGpY8xOUrURnQiiw1bM0R1DukuhrIBuSHiJcHlOPs14+hnd5trhDhgdVLbMVBk6BVAKDH2jyTnNzmJp2AKwQfV74m3QHVNYV0EVrq5/mKwAkwRCGgDSWPpLc7PCjmtCzI9OCpH0FN7VWOoFDbZxQAkaXECyRB93E9jBQ7oEgF7SmUITYMGrDDstXc+wlEG7T0+GN+ym3g1HinChLglHAVKE6GLEiEq644fdASVF3Kf2ysjuvR98UWWHzVnlaQROUo/JjqHb3QeuUfNOAQjLhrArK+IQHGUz6VOb6JrVpPOufAFAIwNcQOzHwRdJpagH/tb85h49R9TFE= root@lab2
+
+output:
+  all: ">> /var/log/cloud-init.log"
+EOF
+
+genisoimage --output cdrom.iso -input-charset utf-8 -volid cidata -joliet -r user-data meta-data network-config
+----
+
+==== Run the RT VM
+[source,bash]
+----
+virt-install --name rhel9-rt-edge \
+ --memory 2048 --vcpus 4 \
+ --disk /var/lib/libvirt/images/rt-edge.qcow2 \
+ --cdrom /var/lib/libvirt/images/rt/cdrom.iso \
+ --cpu host --os-variant rhel9.0 \
+ --network network=default,model=virtio \
+ --noreboot --noautoconsole  --boot menu=on,useserial=on
+----
+
+==== Find IP of the new VM
+[source,bash]
+----
+IP=$(virsh domifaddr rhel9-rt-edge | awk '$1 ~ /vnet/ {print $NF}')
+echo $IP
+----
+==== Verify the VM is having RT Kernel
+[source,bash]
+----
+ssh root@$IP # Since the ssh keys are already injected it should directly log you in.
+uname -a 
+----
 
 == Bugs
 [cols="2,2,2,1,3"]
