@@ -18,7 +18,7 @@ This document is an attempt to bring together the steps required to run Real-Tim
 == Assumptions
 - RHEL for edge builder VM ready and subscribed to Red Hat Repositories
 - All necessary packages for the builder is installed.
-- Cockpit and os-tree builder is running.
+- Service osbuild-composer is enabled and running. Cockpit service is an extra commodity to manage builds from web UI.
 
 == Steps
 === VM Creation
@@ -225,7 +225,7 @@ scp root@192.168.122.36:/root/${build}-disk.qcow2 ./rt-edge.qcow2
 ----
 mkdir /var/lib/libvirt/images/rt && cd $_
 cat > meta-data <<EOF
-instance-id: bb5cc7e0-d949-4f6c-804b-9f8da0b1323a
+instance-id: $(uuidgen)
 EOF
 
 cat > network-config <<EOF
@@ -258,8 +258,7 @@ ssh_deletekeys: True
 ssh_genkeytypes: ['rsa', 'ecdsa']
 
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJtL2AyFSQH5bEfJfdu6JLfoYuLxGDfcxbKqPj9qOJknmH0P21CcFaZT0xlDZ+W9x5Vo0f708SJDrqBm22sXbC63+lRKdKrJzRD0zJb2Nz+SMsFKTviSzvl6z97y7Qh9qPyxM810KYSGWwGIB6iD5cNDe6p3QgAqshee/K4Ec/kDAuqX3H9dpe1AQqqL5mWE5vg5j3QIwcvF8HZmTorF7JfvfT6ZEllO7HhzqUYmHcAyfRhGBvnUqHE6NLc9mzNl8yyUFYcuBLW62M7JU1hkBorMldKC/f7DYXk3elFMzqvdFHyWsRqC1U7/2zHGuGTBnrNYWVzYaZCDWwDgc+sceR msalih
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8f+SSTVE6bP/+ZAup6Q3weGWx+d3Ocj/vLWZXgcodvel3aEJ3tzU4C5FqutHUAsQduzaijavGG+GyqJK8WUXYcvQo6hqkANbK0QDl0oWRRwUOodHYTuzC4ktwFqUUyNxTQaLb81PjxF9cwImxnz9zQyiLCOm3HAfNB8XsqAn/6R4f7LzMJezEGpY8xOUrURnQiiw1bM0R1DukuhrIBuSHiJcHlOPs14+hnd5trhDhgdVLbMVBk6BVAKDH2jyTnNzmJp2AKwQfV74m3QHVNYV0EVrq5/mKwAkwRCGgDSWPpLc7PCjmtCzI9OCpH0FN7VWOoFDbZxQAkaXECyRB93E9jBQ7oEgF7SmUITYMGrDDstXc+wlEG7T0+GN+ym3g1HinChLglHAVKE6GLEiEq644fdASVF3Kf2ysjuvR98UWWHzVnlaQROUo/JjqHb3QeuUfNOAQjLhrArK+IQHGUz6VOb6JrVpPOufAFAIwNcQOzHwRdJpagH/tb85h49R9TFE= root@lab2
+  - <YOUR SSH PUBLIC KEY HERE>
 
 output:
   all: ">> /var/log/cloud-init.log"
@@ -307,7 +306,7 @@ append = "hugepages=10"
 |===
 |Reported By |Type (Code/Doc)|BZ Link |New / Existing|Issue Summary
 
-| Glanni|Code|https://bugzilla.redhat.com/show_bug.cgi?id=2104500|New|During the creation of a RHEL for Edge commit with a custom kernel-rt the build fails with the following errors:
+| Gianni Salinetti|Code|https://bugzilla.redhat.com/show_bug.cgi?id=2104500|New|During the creation of a RHEL for Edge commit with a custom kernel-rt the build fails with the following errors:
 
 
 error: Finalizing rootfs: During kernel processing: Multiple subdirectories found in: usr/lib/modules: 5.14.0-70.17.1.el9_0.x86_64 5.14.0-70.17.1.rt21.89.el9_0.x86_64 
